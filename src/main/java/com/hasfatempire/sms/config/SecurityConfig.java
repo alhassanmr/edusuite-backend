@@ -37,7 +37,8 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**", "/h2-console/**").permitAll()
+                        .requestMatchers("/api/auth/**", "/h2-console/**", "/api/payments/paystack/webhook").permitAll()
+                        .requestMatchers("/api/payments/paystack/**").authenticated()
                         .requestMatchers("/api/portal/parent/**").hasRole("PARENT")
                         .requestMatchers("/api/portal/student/**").hasRole("STUDENT")
                         .requestMatchers("/api/portal/teacher/**").hasRole("TEACHER")

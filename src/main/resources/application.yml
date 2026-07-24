@@ -47,6 +47,10 @@ app:
     email:
       enabled: false  # true in prod with spring.mail configured
       from: no-reply@edusuite.app
+  payments:
+    paystack:
+      secret-key: ""              # sk_test_xxx from dashboard.paystack.com
+      callback-url: "http://localhost:5173/payment/callback"
 
 ---
 # ---------- PROD PROFILE: PostgreSQL, env-driven ----------
@@ -81,6 +85,10 @@ app:
     email:
       enabled: ${EMAIL_ENABLED:false}
       from: ${EMAIL_FROM:no-reply@edusuite.app}
+  payments:
+    paystack:
+      secret-key: ${PAYSTACK_SECRET_KEY:}
+      callback-url: ${PAYSTACK_CALLBACK_URL:https://app.yourdomain.com/payment/callback}
 
 spring.mail:
   host: ${SMTP_HOST:smtp.gmail.com}
