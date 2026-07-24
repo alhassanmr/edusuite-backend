@@ -3,7 +3,9 @@ package com.hasfatempire.sms.service;
 import com.hasfatempire.sms.exception.ResourceNotFoundException;
 import com.hasfatempire.sms.model.Student;
 import com.hasfatempire.sms.repository.StudentRepository;
+import com.hasfatempire.sms.security.TenantContext;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -13,14 +15,21 @@ import java.util.List;
 public class StudentService {
 
     private final StudentRepository studentRepository;
+    private final TenantContext tenantContext;
 
-    public List<Student> findAll() {
-        return studentRepository.findAll();
+    public List<Student> findAll(Authentication auth) {
+        Long schoolId = tenantContext.getCurrentSchoolId(auth);
+        return studentRepository.findBySchoolId(schoolId);
     }
 
-    public Student findById(Long id) {
-        return studentRepository.findById(id)
+    public Student findById(Long id, Authentication auth) {
+        Long schoolId = tenantContext.getCurrentSchoolId(auth);
+        Student student = studentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Student not found: " + id));
+        if (!student.getSchool().getId().equals(schoolId)) {
+            throw new ResourceNotFoundException("Student not found: " + id);
+        }
+        return student;
     }
 
     public List<Student> findByClass(Long classId) {

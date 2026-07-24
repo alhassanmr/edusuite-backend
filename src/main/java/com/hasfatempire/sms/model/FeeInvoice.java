@@ -23,6 +23,11 @@ public class FeeInvoice {
     private Long id;
 
     @ManyToOne
+    @JoinColumn(name = "school_id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    private School school;
+
+    @ManyToOne
     @JoinColumn(name = "student_id", nullable = false)
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Student student;

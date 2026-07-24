@@ -19,6 +19,11 @@ public class Exam {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @ManyToOne
+    @JoinColumn(name = "school_id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    private School school;
+
     private String name; // "Mid-Term Exams", "End of Term 2"
 
     private String term;

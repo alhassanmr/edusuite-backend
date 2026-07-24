@@ -5,6 +5,7 @@ import com.hasfatempire.sms.service.StudentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,14 +19,17 @@ public class StudentController {
 
     @GetMapping
     public List<Student> all(@RequestParam(required = false) Long classId,
-                              @RequestParam(required = false) String q) {
+                              @RequestParam(required = false) String q,
+                              Authentication authentication) {
         if (classId != null) return studentService.findByClass(classId);
         if (q != null && !q.isBlank()) return studentService.search(q);
-        return studentService.findAll();
+        return studentService.findAll(authentication);
     }
 
     @GetMapping("/{id}")
-    public Student byId(@PathVariable Long id) { return studentService.findById(id); }
+    public Student byId(@PathVariable Long id, Authentication authentication) { 
+        return studentService.findById(id, authentication); 
+    }
 
     @PostMapping
     public ResponseEntity<Student> create(@Valid @RequestBody Student student) {

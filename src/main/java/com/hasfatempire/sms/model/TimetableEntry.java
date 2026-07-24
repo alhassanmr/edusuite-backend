@@ -21,6 +21,11 @@ public class TimetableEntry {
     private Long id;
 
     @ManyToOne
+    @JoinColumn(name = "school_id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    private School school;
+
+    @ManyToOne
     @JoinColumn(name = "school_class_id", nullable = false)
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private SchoolClass schoolClass;

@@ -17,6 +17,11 @@ public class SchoolClass {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @ManyToOne
+    @JoinColumn(name = "school_id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    private School school;
+
     @Column(nullable = false)
     private String name; // e.g. "Basic 6", "JHS 2"
 

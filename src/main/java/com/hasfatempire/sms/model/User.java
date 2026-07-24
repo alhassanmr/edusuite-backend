@@ -51,6 +51,11 @@ public class User implements UserDetails {
     private Long linkedParentId;
     private Long linkedStudentId;
 
+    @ManyToOne
+    @JoinColumn(name = "school_id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    private School school;
+
     @Builder.Default
     private Instant createdAt = Instant.now();
 
