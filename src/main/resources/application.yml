@@ -1,0 +1,64 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: edusuite-backend
+
+  profiles:
+    active: dev
+
+  jackson:
+    default-property-inclusion: non_null
+
+---
+# ---------- DEV PROFILE: in-memory H2, zero setup ----------
+spring:
+  config:
+    activate:
+      on-profile: dev
+  datasource:
+    url: jdbc:h2:mem:edusuite;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+
+app:
+  jwt:
+    secret: "dGhpc0lzQVNhbXBsZURldkpXVFNlY3JldEtleUZvckVkdVN1aXRlQXBwMjAyNg=="
+    expiration-ms: 86400000
+  cors:
+    allowed-origins: "http://localhost:5173"
+
+---
+# ---------- PROD PROFILE: PostgreSQL, env-driven ----------
+spring:
+  config:
+    activate:
+      on-profile: prod
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/edusuite}
+    username: ${DB_USERNAME:edusuite}
+    password: ${DB_PASSWORD:edusuite}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+
+app:
+  jwt:
+    secret: ${JWT_SECRET}
+    expiration-ms: ${JWT_EXPIRATION_MS:86400000}
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:https://app.hasfatempire.com}

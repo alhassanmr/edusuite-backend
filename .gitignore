@@ -1,0 +1,33 @@
+# Maven
+target/
+*.jar
+*.war
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+.buildpath
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+*.iml
+
+# Spring Boot
+application-local.yml
+application-prod.yml
+
+# Logs
+logs/
+*.log
+
+# Java
+*.class
+*.jar
+*.war
