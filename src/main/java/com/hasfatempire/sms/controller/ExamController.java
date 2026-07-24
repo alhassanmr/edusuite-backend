@@ -6,6 +6,7 @@ import com.hasfatempire.sms.service.ExamService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,29 +19,30 @@ public class ExamController {
     private final ExamService examService;
 
     @GetMapping
-    public List<Exam> all(@RequestParam(required = false) Long classId) {
-        return classId != null ? examService.byClass(classId) : examService.findAll();
+    public List<Exam> all(@RequestParam(required = false) Long classId, Authentication auth) {
+        return classId != null ? examService.byClass(classId, auth) : examService.findAll(auth);
     }
 
     @GetMapping("/{id}")
-    public Exam byId(@PathVariable Long id) { return examService.findById(id); }
+    public Exam byId(@PathVariable Long id, Authentication auth) { return examService.findById(id, auth); }
 
     @PostMapping
-    public ResponseEntity<Exam> create(@Valid @RequestBody Exam exam) {
-        return ResponseEntity.ok(examService.create(exam));
+    public ResponseEntity<Exam> create(@Valid @RequestBody Exam exam, Authentication auth) {
+        return ResponseEntity.ok(examService.create(exam, auth));
     }
 
     @PostMapping("/{id}/publish")
-    public Exam publish(@PathVariable Long id) { return examService.publish(id); }
+    public Exam publish(@PathVariable Long id, Authentication auth) { return examService.publish(id, auth); }
 
     @PostMapping("/{examId}/results/{studentId}")
-    public Result recordResult(@PathVariable Long examId, @PathVariable Long studentId, @RequestBody Result result) {
-        return examService.recordResult(examId, studentId, result);
+    public Result recordResult(@PathVariable Long examId, @PathVariable Long studentId,
+                                @RequestBody Result result, Authentication auth) {
+        return examService.recordResult(examId, studentId, result, auth);
     }
 
     @GetMapping("/{examId}/results")
-    public List<Result> resultsForExam(@PathVariable Long examId) {
-        return examService.resultsForExam(examId);
+    public List<Result> resultsForExam(@PathVariable Long examId, Authentication auth) {
+        return examService.resultsForExam(examId, auth);
     }
 
     @GetMapping("/results/student/{studentId}")

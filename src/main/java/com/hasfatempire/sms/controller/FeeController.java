@@ -19,21 +19,23 @@ public class FeeController {
     private final FeeService feeService;
 
     @GetMapping("/invoices")
-    public List<FeeInvoice> all() { return feeService.findAll(); }
+    public List<FeeInvoice> all(Authentication auth) { return feeService.findAll(auth); }
 
     @GetMapping("/invoices/{id}")
-    public FeeInvoice byId(@PathVariable Long id) { return feeService.findById(id); }
+    public FeeInvoice byId(@PathVariable Long id, Authentication auth) { return feeService.findById(id, auth); }
 
     @GetMapping("/invoices/student/{studentId}")
-    public List<FeeInvoice> byStudent(@PathVariable Long studentId) { return feeService.byStudent(studentId); }
+    public List<FeeInvoice> byStudent(@PathVariable Long studentId, Authentication auth) {
+        return feeService.byStudent(studentId, auth);
+    }
 
     @PostMapping("/invoices")
-    public ResponseEntity<FeeInvoice> createInvoice(@Valid @RequestBody FeeInvoice invoice) {
-        return ResponseEntity.ok(feeService.createInvoice(invoice));
+    public ResponseEntity<FeeInvoice> createInvoice(@Valid @RequestBody FeeInvoice invoice, Authentication auth) {
+        return ResponseEntity.ok(feeService.createInvoice(invoice, auth));
     }
 
     @PostMapping("/invoices/{id}/payments")
-    public FeeInvoice pay(@PathVariable Long id, @RequestBody FeePaymentRequest request, Authentication authentication) {
-        return feeService.recordPayment(id, request, authentication.getName());
+    public FeeInvoice pay(@PathVariable Long id, @RequestBody FeePaymentRequest request, Authentication auth) {
+        return feeService.recordPaymentAsAdmin(id, request, auth);
     }
 }

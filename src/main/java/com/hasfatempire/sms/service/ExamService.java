@@ -8,7 +8,9 @@ import com.hasfatempire.sms.notification.NotificationService;
 import com.hasfatempire.sms.repository.ExamRepository;
 import com.hasfatempire.sms.repository.ResultRepository;
 import com.hasfatempire.sms.repository.StudentRepository;
+import com.hasfatempire.sms.security.TenantContext;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -21,20 +23,36 @@ public class ExamService {
     private final ResultRepository resultRepository;
     private final StudentRepository studentRepository;
     private final NotificationService notificationService;
+    private final TenantContext tenantContext;
 
-    public List<Exam> findAll() { return examRepository.findAll(); }
-
-    public Exam findById(Long id) {
-        return examRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Exam not found: " + id));
+    public List<Exam> findAll(Authentication auth) {
+        return examRepository.findBySchoolId(tenantContext.getCurrentSchoolId(auth));
     }
 
-    public List<Exam> byClass(Long classId) { return examRepository.findBySchoolClassId(classId); }
+    public Exam findById(Long id, Authentication auth) {
+        Long schoolId = tenantContext.getCurrentSchoolId(auth);
+        Exam exam = examRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Exam not found: " + id));
+        if (exam.getSchool() == null || !exam.getSchool().getId().equals(schoolId)) {
+            throw new ResourceNotFoundException("Exam not found: " + id);
+        }
+        return exam;
+    }
 
-    public Exam create(Exam exam) { return examRepository.save(exam); }
+    public List<Exam> byClass(Long classId, Authentication auth) {
+        Long schoolId = tenantContext.getCurrentSchoolId(auth);
+        return examRepository.findBySchoolClassId(classId).stream()
+                .filter(e -> e.getSchool() != null && e.getSchool().getId().equals(schoolId))
+                .toList();
+    }
 
-    public Exam publish(Long id) {
-        Exam exam = findById(id);
+    public Exam create(Exam exam, Authentication auth) {
+        exam.setSchool(tenantContext.getCurrentSchool(auth));
+        return examRepository.save(exam);
+    }
+
+    public Exam publish(Long id, Authentication auth) {
+        Exam exam = findById(id, auth);
         exam.setPublished(true);
         Exam saved = examRepository.save(exam);
         notifyResultsPublished(saved);
@@ -52,7 +70,6 @@ public class ExamService {
                     exam.getName(),
                     student.getFirstName(), student.getLastName(),
                     result.getScore(), result.getGrade());
-            // Notify parent
             if (student.getParentGuardian() != null) {
                 notificationService.notifyBoth(exam.getSchool(),
                         student.getParentGuardian().getPhone(),
@@ -62,8 +79,16 @@ public class ExamService {
         }
     }
 
-    public Result recordResult(Long examId, Long studentId, Result incoming) {
-        Exam exam = findById(examId);
+    /** Tenant-checked result recording used by admin controller. */
+    public Result recordResult(Long examId, Long studentId, Result incoming, Authentication auth) {
+        findById(examId, auth); // ownership check on exam
+        return recordResultInternal(examId, studentId, incoming);
+    }
+
+    /** Used by teacher portal (teacher link already verified there). */
+    public Result recordResultInternal(Long examId, Long studentId, Result incoming) {
+        Exam exam = examRepository.findById(examId)
+                .orElseThrow(() -> new ResourceNotFoundException("Exam not found: " + examId));
         Student student = studentRepository.findById(studentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Student not found: " + studentId));
         Result result = resultRepository.findByExamIdAndStudentId(examId, studentId)
@@ -74,9 +99,14 @@ public class ExamService {
         return resultRepository.save(result);
     }
 
-    public List<Result> resultsForExam(Long examId) { return resultRepository.findByExamId(examId); }
+    public List<Result> resultsForExam(Long examId, Authentication auth) {
+        findById(examId, auth);
+        return resultRepository.findByExamId(examId);
+    }
 
-    public List<Result> resultsForStudent(Long studentId) { return resultRepository.findByStudentId(studentId); }
+    public List<Result> resultsForStudent(Long studentId) {
+        return resultRepository.findByStudentId(studentId);
+    }
 
     private String gradeFor(Double score, Double maxScore) {
         if (score == null || maxScore == null || maxScore == 0) return "N/A";

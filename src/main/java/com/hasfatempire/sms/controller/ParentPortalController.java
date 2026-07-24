@@ -106,10 +106,13 @@ public class ParentPortalController {
                 .toList();
     }
 
-    /** Notices for parents */
+    /** Notices for parents (school-scoped) */
     @GetMapping("/notices")
-    public List<Notice> notices() {
-        return noticeRepository.findByAudienceInOrderByPostedAtDesc(
+    public List<Notice> notices(Authentication auth) {
+        User user = userRepository.findByUsername(auth.getName())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        return noticeRepository.findBySchoolIdAndAudienceInOrderByPostedAtDesc(
+                user.getSchool().getId(),
                 List.of(Notice.Audience.ALL, Notice.Audience.PARENTS));
     }
 }

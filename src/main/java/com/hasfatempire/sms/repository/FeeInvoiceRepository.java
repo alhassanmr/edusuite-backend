@@ -8,4 +8,5 @@ import java.util.List;
 public interface FeeInvoiceRepository extends JpaRepository<FeeInvoice, Long> {
     List<FeeInvoice> findByStudentId(Long studentId);
     List<FeeInvoice> findByStatus(FeeInvoice.InvoiceStatus status);
+    List<FeeInvoice> findBySchoolId(Long schoolId);
 }

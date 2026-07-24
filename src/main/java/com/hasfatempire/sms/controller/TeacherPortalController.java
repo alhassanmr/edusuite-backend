@@ -82,13 +82,16 @@ public class TeacherPortalController {
     public Result recordResult(@PathVariable Long examId, @PathVariable Long studentId,
                                 @RequestBody Result result, Authentication auth) {
         me(auth);
-        return examService.recordResult(examId, studentId, result);
+        return examService.recordResultInternal(examId, studentId, result);
     }
 
-    /** Notices for teachers */
+    /** Notices for teachers (school-scoped) */
     @GetMapping("/notices")
-    public List<Notice> notices() {
-        return noticeRepository.findByAudienceInOrderByPostedAtDesc(
+    public List<Notice> notices(Authentication auth) {
+        User user = userRepository.findByUsername(auth.getName())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        return noticeRepository.findBySchoolIdAndAudienceInOrderByPostedAtDesc(
+                user.getSchool().getId(),
                 List.of(Notice.Audience.ALL, Notice.Audience.TEACHERS));
     }
 }

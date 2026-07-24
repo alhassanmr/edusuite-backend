@@ -1,7 +1,7 @@
 package com.hasfatempire.sms.controller;
 
-import com.hasfatempire.sms.model.Notice;
-import com.hasfatempire.sms.service.NoticeService;
+import com.hasfatempire.sms.model.Subject;
+import com.hasfatempire.sms.service.SubjectService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -11,23 +11,23 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/notices")
+@RequestMapping("/api/subjects")
 @RequiredArgsConstructor
-public class NoticeController {
+public class SubjectController {
 
-    private final NoticeService noticeService;
+    private final SubjectService subjectService;
 
     @GetMapping
-    public List<Notice> all(Authentication auth) { return noticeService.findAll(auth); }
+    public List<Subject> all(Authentication auth) { return subjectService.findAll(auth); }
 
     @PostMapping
-    public ResponseEntity<Notice> create(@Valid @RequestBody Notice notice, Authentication auth) {
-        return ResponseEntity.ok(noticeService.create(notice, auth));
+    public ResponseEntity<Subject> create(@Valid @RequestBody Subject subject, Authentication auth) {
+        return ResponseEntity.ok(subjectService.create(subject, auth));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id, Authentication auth) {
-        noticeService.delete(id, auth);
+        subjectService.delete(id, auth);
         return ResponseEntity.noContent().build();
     }
 }

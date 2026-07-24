@@ -84,10 +84,13 @@ public class StudentPortalController {
         return timetableRepository.findBySchoolClassId(student.getSchoolClass().getId());
     }
 
-    /** Notices for students */
+    /** Notices for students (school-scoped) */
     @GetMapping("/notices")
-    public List<Notice> notices() {
-        return noticeRepository.findByAudienceInOrderByPostedAtDesc(
+    public List<Notice> notices(Authentication auth) {
+        User user = userRepository.findByUsername(auth.getName())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        return noticeRepository.findBySchoolIdAndAudienceInOrderByPostedAtDesc(
+                user.getSchool().getId(),
                 List.of(Notice.Audience.ALL, Notice.Audience.STUDENTS));
     }
 }

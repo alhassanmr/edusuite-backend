@@ -34,6 +34,7 @@ public class AttendanceService {
                     .orElse(Attendance.builder()
                             .student(student)
                             .schoolClass(schoolClass)
+                            .school(schoolClass.getSchool())
                             .date(request.date())
                             .build());
 
