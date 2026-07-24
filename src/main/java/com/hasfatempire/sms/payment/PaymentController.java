@@ -74,7 +74,17 @@ public class PaymentController {
         String reference = "EDU-" + invoiceId + "-" + UUID.randomUUID().toString().substring(0, 8);
         String currency = "GHS"; // TODO: make per-school configurable
 
-        Map<String, String> init = paystackService.initialize(user.getEmail(), payAmount, currency, reference);
+        // SPLIT PAYMENT: school must have a settlement account configured so their
+        // money goes DIRECTLY to their own bank/MoMo — the platform never holds it.
+        String subaccount = invoice.getSchool() != null ? invoice.getSchool().getPaystackSubaccountCode() : null;
+        if (subaccount == null || subaccount.isBlank()) {
+            throw new BadRequestException(
+                    "Online payments are not yet activated for this school. " +
+                    "The school admin must add a settlement account in Settings first.");
+        }
+
+        Map<String, String> init = paystackService.initializeSplit(
+                user.getEmail(), payAmount, currency, reference, subaccount);
 
         transactionRepository.save(PaymentTransaction.builder()
                 .reference(reference)

@@ -55,4 +55,16 @@ public class School {
 
     @Column(nullable = false)
     private String createdByUsername; // admin who registered the school
+
+    // ---- Payment settlement (Paystack split payments) ----
+    // Money goes DIRECTLY to the school's account; platform takes a small commission.
+    private String paystackSubaccountCode;   // e.g. ACCT_xxxxx (set once settlement is configured)
+    private String settlementBankCode;       // Paystack bank/MoMo code
+    private String settlementBankName;       // e.g. "GCB Bank" or "MTN Mobile Money"
+    private String settlementAccountNumber;  // bank account or MoMo number
+    private String settlementAccountName;    // must match account holder
+
+    /** Percentage of each payment retained by the platform (Hasfat Empire). */
+    @Builder.Default
+    private Double platformFeePercent = 1.0;
 }
