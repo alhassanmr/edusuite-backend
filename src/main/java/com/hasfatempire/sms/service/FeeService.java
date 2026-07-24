@@ -5,6 +5,9 @@ import com.hasfatempire.sms.exception.BadRequestException;
 import com.hasfatempire.sms.exception.ResourceNotFoundException;
 import com.hasfatempire.sms.model.FeeInvoice;
 import com.hasfatempire.sms.model.FeePayment;
+import com.hasfatempire.sms.model.ParentGuardian;
+import com.hasfatempire.sms.model.Student;
+import com.hasfatempire.sms.notification.NotificationService;
 import com.hasfatempire.sms.repository.FeeInvoiceRepository;
 import com.hasfatempire.sms.repository.FeePaymentRepository;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +23,7 @@ public class FeeService {
 
     private final FeeInvoiceRepository invoiceRepository;
     private final FeePaymentRepository paymentRepository;
+    private final NotificationService notificationService;
 
     public List<FeeInvoice> findAll() { return invoiceRepository.findAll(); }
 
@@ -35,7 +39,25 @@ public class FeeService {
     public FeeInvoice createInvoice(FeeInvoice invoice) {
         invoice.setAmountPaid(BigDecimal.ZERO);
         invoice.setStatus(FeeInvoice.InvoiceStatus.UNPAID);
-        return invoiceRepository.save(invoice);
+        FeeInvoice saved = invoiceRepository.save(invoice);
+        notifyParentInvoiceCreated(saved);
+        return saved;
+    }
+
+    private void notifyParentInvoiceCreated(FeeInvoice invoice) {
+        Student student = invoice.getStudent();
+        if (student == null || student.getParentGuardian() == null) return;
+        ParentGuardian parent = student.getParentGuardian();
+        String message = String.format(
+                "%s: New fee invoice for %s %s — %s %s due %s. Amount: GHS %s. Please arrange payment. Thank you.",
+                invoice.getSchool() != null ? invoice.getSchool().getName() : "School",
+                student.getFirstName(), student.getLastName(),
+                invoice.getTerm() != null ? invoice.getTerm() : "",
+                invoice.getAcademicYear() != null ? invoice.getAcademicYear() : "",
+                invoice.getDueDate() != null ? invoice.getDueDate().toString() : "soon",
+                invoice.getAmountDue());
+        notificationService.notifyBoth(invoice.getSchool(), parent.getPhone(), parent.getEmail(),
+                "New fee invoice — " + student.getFirstName() + " " + student.getLastName(), message);
     }
 
     public FeeInvoice recordPayment(Long invoiceId, FeePaymentRequest request, String receivedBy) {
@@ -61,7 +83,23 @@ public class FeeService {
         } else {
             invoice.setStatus(FeeInvoice.InvoiceStatus.PARTIALLY_PAID);
         }
-        return invoiceRepository.save(invoice);
+        FeeInvoice updated = invoiceRepository.save(invoice);
+        notifyParentPaymentReceived(updated, request.amount());
+        return updated;
+    }
+
+    private void notifyParentPaymentReceived(FeeInvoice invoice, BigDecimal amount) {
+        Student student = invoice.getStudent();
+        if (student == null || student.getParentGuardian() == null) return;
+        ParentGuardian parent = student.getParentGuardian();
+        BigDecimal balance = invoice.getAmountDue().subtract(invoice.getAmountPaid());
+        String message = String.format(
+                "%s: Payment of GHS %s received for %s %s. Balance: GHS %s. Status: %s. Thank you!",
+                invoice.getSchool() != null ? invoice.getSchool().getName() : "School",
+                amount, student.getFirstName(), student.getLastName(),
+                balance.max(BigDecimal.ZERO), invoice.getStatus());
+        notificationService.notifyBoth(invoice.getSchool(), parent.getPhone(), parent.getEmail(),
+                "Payment received — " + student.getFirstName() + " " + student.getLastName(), message);
     }
 
     public BigDecimal totalCollected() {

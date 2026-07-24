@@ -4,6 +4,7 @@ import com.hasfatempire.sms.exception.ResourceNotFoundException;
 import com.hasfatempire.sms.model.Exam;
 import com.hasfatempire.sms.model.Result;
 import com.hasfatempire.sms.model.Student;
+import com.hasfatempire.sms.notification.NotificationService;
 import com.hasfatempire.sms.repository.ExamRepository;
 import com.hasfatempire.sms.repository.ResultRepository;
 import com.hasfatempire.sms.repository.StudentRepository;
@@ -19,6 +20,7 @@ public class ExamService {
     private final ExamRepository examRepository;
     private final ResultRepository resultRepository;
     private final StudentRepository studentRepository;
+    private final NotificationService notificationService;
 
     public List<Exam> findAll() { return examRepository.findAll(); }
 
@@ -34,7 +36,30 @@ public class ExamService {
     public Exam publish(Long id) {
         Exam exam = findById(id);
         exam.setPublished(true);
-        return examRepository.save(exam);
+        Exam saved = examRepository.save(exam);
+        notifyResultsPublished(saved);
+        return saved;
+    }
+
+    private void notifyResultsPublished(Exam exam) {
+        List<Result> results = resultRepository.findByExamId(exam.getId());
+        for (Result result : results) {
+            Student student = result.getStudent();
+            if (student == null) continue;
+            String message = String.format(
+                    "%s: Results for %s are now published for %s %s. Score: %s (%s). Log in to the portal for details.",
+                    exam.getSchool() != null ? exam.getSchool().getName() : "School",
+                    exam.getName(),
+                    student.getFirstName(), student.getLastName(),
+                    result.getScore(), result.getGrade());
+            // Notify parent
+            if (student.getParentGuardian() != null) {
+                notificationService.notifyBoth(exam.getSchool(),
+                        student.getParentGuardian().getPhone(),
+                        student.getParentGuardian().getEmail(),
+                        "Exam results published — " + exam.getName(), message);
+            }
+        }
     }
 
     public Result recordResult(Long examId, Long studentId, Result incoming) {

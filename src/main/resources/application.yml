@@ -40,6 +40,13 @@ app:
     expiration-ms: 86400000
   cors:
     allowed-origins: "http://localhost:5173"
+  notifications:
+    sms:
+      provider: log   # log | arkesel | twilio
+      sender-id: EduSuite
+    email:
+      enabled: false  # true in prod with spring.mail configured
+      from: no-reply@edusuite.app
 
 ---
 # ---------- PROD PROFILE: PostgreSQL, env-driven ----------
@@ -62,3 +69,27 @@ app:
     expiration-ms: ${JWT_EXPIRATION_MS:86400000}
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:https://app.hasfatempire.com}
+  notifications:
+    sms:
+      provider: ${SMS_PROVIDER:log}          # arkesel for Ghana, twilio international
+      api-key: ${SMS_API_KEY:}               # Arkesel API key
+      sender-id: ${SMS_SENDER_ID:EduSuite}
+      twilio:
+        account-sid: ${TWILIO_ACCOUNT_SID:}
+        auth-token: ${TWILIO_AUTH_TOKEN:}
+        from-number: ${TWILIO_FROM_NUMBER:}
+    email:
+      enabled: ${EMAIL_ENABLED:false}
+      from: ${EMAIL_FROM:no-reply@edusuite.app}
+
+spring.mail:
+  host: ${SMTP_HOST:smtp.gmail.com}
+  port: ${SMTP_PORT:587}
+  username: ${SMTP_USERNAME:}
+  password: ${SMTP_PASSWORD:}
+  properties:
+    mail:
+      smtp:
+        auth: true
+        starttls:
+          enable: true

@@ -21,6 +21,7 @@ import java.util.List;
 
 @Configuration
 @EnableWebSecurity
+@org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
@@ -37,9 +38,12 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**", "/h2-console/**").permitAll()
+                        .requestMatchers("/api/portal/parent/**").hasRole("PARENT")
+                        .requestMatchers("/api/portal/student/**").hasRole("STUDENT")
+                        .requestMatchers("/api/portal/teacher/**").hasRole("TEACHER")
                         .requestMatchers(HttpMethod.GET, "/api/notices/**").authenticated()
                         .requestMatchers("/api/students/**", "/api/teachers/**", "/api/classes/**",
-                                "/api/fees/**", "/api/reports/**").hasAnyRole("ADMIN", "TEACHER")
+                                "/api/fees/**", "/api/reports/**", "/api/users/**").hasAnyRole("ADMIN", "TEACHER")
                         .anyRequest().authenticated()
                 )
                 .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin())) // for h2-console
